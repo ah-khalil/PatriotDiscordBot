@@ -1,12 +1,11 @@
 import re
 import threading
 
-from PatriotBot import patriot_bot
+from PatriotCog import PatriotCog
 from bs4 import BeautifulSoup as soup
-
 from discord import Embed, Color
+from discord.ext import commands
 from discord.ext.commands import Cog
-
 from urllib.request import (Request, urlopen)
 from cogs.billboard import (
     hot_url,
@@ -18,15 +17,23 @@ from entities.SongInfo import SongInfo
 from entities.AlbumInfo import AlbumInfo
 from entities.BillboardItem import BillboardItem
 
-class Billboard(Cog):
-    def __init__(self):
+
+class Billboard(PatriotCog):
+    def __init__(self, patriot_bot):
+        super(Billboard, self).__init__()
+
         self.song_list = []
         self.album_list = []
         self.lock = threading.Lock()
+        self.patriot_bot = patriot_bot
+        self.patriot_bot.add_task(self.update_billboard_items, 60 * 60 * 24)
 
-        patriot_bot.add_task(self.update_billboard_items, 60 * 60 * 24)
 
-    @patriot_bot.command
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("We in this bitch")
+
+    @commands.command()
     async def hot100(self, ctx):
         hot100_msg_dict = {"MSG_NOT_RES": "song not found"}
 
@@ -85,7 +92,6 @@ class Billboard(Cog):
 
         try:
             bill_item = kwargs['bill_item']
-
             args = ctx.content.split(" ", 1)
             regex = r"\"([^\"]*)\""
 
@@ -170,4 +176,4 @@ class Billboard(Cog):
 
 
 def setup(p_bot):
-    p_bot.add_cog(Billboard())
+    p_bot.add_cog(Billboard(p_bot))

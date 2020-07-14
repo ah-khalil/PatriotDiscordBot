@@ -1,26 +1,31 @@
 import re
 
 from bs4 import BeautifulSoup
-
+from discord.ext import commands
+from PatriotCog import PatriotCog
+# from PatriotBot import patriot_bot
 from discord.ext.commands.cog import Cog
-
 from urllib.request import (Request, urlopen)
 
-def setup(p_bot):
-    p_bot.add_cog(Genius())
 
-class Genius(Cog):
-    def __init__(self):
-        pass
+class Genius(PatriotCog):
+    def __init__(self, patriot_bot):
+        super(Genius, self).__init__()
 
-    async def lyrics(self, **kwargs):
-        lyrics_msg_dict = {
+        self.patriot_bot = patriot_bot
+        self.__message = {
             "ERR_REQ_ARGS": "{}, command requires the following arguments: {}",
             "ERR_INV_NUM_ARGS": "{}, invalid number of arguments given",
             "ERR_NO_QUOTES": "{}, don't leave quotes empty",
             "MSG_NO_LYRICS": "{}, no lyrics found"
         }
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("Genius cog listener - on ready")
+
+    @commands.command()
+    async def lyrics(self, *args, **kwargs):
         arg_msg = "```\nUsage: \n" \
        "\tt?lyrics \"<song name>\" \"<artist name>\"\n" \
        "\tt?lyrics (-h | --help)\n\n"
@@ -97,3 +102,7 @@ class Genius(Cog):
             return await ctx.channel.send(lyrics_line_split)
         else:
             return await ctx.channel.send(lyrics_msg_dict["MSG_NO_LYRICS"].format(ctx.author.mention))
+
+
+def setup(p_bot):
+    p_bot.add_cog(Genius(p_bot))

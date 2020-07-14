@@ -1,14 +1,5 @@
-from errors.CommandNotFoundError import CommandNotFoundError
 from PatriotBot import patriot_bot
-from util import checks
-
-import time
 import pprint
-import pkgutil
-
-module_dict = {}
-pp = pprint.PrettyPrinter()
-checker = checks.Checks(module_dict)
 
 
 @patriot_bot.event
@@ -19,43 +10,35 @@ async def on_ready():
 
 @patriot_bot.command
 async def test_command():
-    print("I'm a shit programmer and I'll never have a good life")
+    print("I'm a shit programmer")
 
+if __name__ == "__main__":
+    pp = pprint.PrettyPrinter()
+    patriot_bot.load_extensions()
+    patriot_bot.run_tasks()
+    patriot_bot.run(patriot_bot.auth["discord_client_auth"]["token"])
 
-def perm_str_propefier(s_str: str):
-    ret_str = ""
-    str_no_und_sc = s_str.replace("_", " ")
-
-    ret_str += str_no_und_sc[0].capitalize()
-
-    for i, c in enumerate(str_no_und_sc):
-        if i >= 1:
-            if str_no_und_sc[i - 1] == " ":
-                ret_str += str_no_und_sc[i].capitalize()
-            else:
-                ret_str += str_no_und_sc[i]
-
-    return ret_str
-
+# module_dict = {}
+# checker = checks.Checks(module_dict)
 
 # @patriot_bot.check_time
-def recurse_get_modules(path_name, super_set):
-    super_set[path_name] = []
-    for importer, name, ispkg in pkgutil.iter_modules([path_name]):
-        if ispkg:
-            recurse_get_modules(path_name + '/' + name, super_set)
-        else:
-            mod_obj = importer.find_module(name).load_module(name)
-            # module_dict[name] = {
-            #     "module": mod_obj,
-            #     "command": getattr(mod_obj, name),
-            #     "perm_check": getattr(mod_obj, "PERM_CHECK_LIST"),
-            #     "description": getattr(mod_obj, "DESC"),
-            #     "arguments": getattr(mod_obj, "ARGS"),
-            #     "timeout_list": {}
-            # }
-
-            super_set[path_name].append(name)
+# def recurse_get_modules(path_name, super_set):
+#     super_set[path_name] = []
+#     for importer, name, ispkg in pkgutil.iter_modules([path_name]):
+#         if ispkg:
+#             recurse_get_modules(path_name + '/' + name, super_set)
+#         else:
+#             mod_obj = importer.find_module(name).load_module(name)
+#             module_dict[name] = {
+#                 "module": mod_obj,
+#                 "command": getattr(mod_obj, name),
+#                 "perm_check": getattr(mod_obj, "PERM_CHECK_LIST"),
+#                 "description": getattr(mod_obj, "DESC"),
+#                 "arguments": getattr(mod_obj, "ARGS"),
+#                 "timeout_list": {}
+#             }
+#
+#             super_set[path_name].append(name)
 
 
 # @patriot_bot.event
@@ -119,7 +102,5 @@ def recurse_get_modules(path_name, super_set):
 #         #     await ctx.channel.send("Something went wrong, please try again later")
 
 
-if __name__ == "__main__":
-    patriot_bot.load_extension('cogs.Billboard')
-    patriot_bot.run(patriot_bot.auth["discord_client_auth"]["token"])
+
 

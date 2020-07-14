@@ -1,3 +1,4 @@
+import importlib
 import logging
 import inspect
 import pprint
@@ -8,8 +9,11 @@ import os
 
 from errors.InitializationError import InitializationError
 from functools import wraps
+from PatriotCog import PatriotCog
 from PatriotTask import PatriotTask
 from discord.ext import commands
+from discord.ext.commands.errors import ExtensionNotFound
+from discord.ext.commands.errors import ExtensionNotLoaded
 
 
 class PatriotBot(commands.Bot):
@@ -18,6 +22,7 @@ class PatriotBot(commands.Bot):
     def __init__(self, command_prefix):
         self.task_list = {}
         self.pretty_p = pprint.PrettyPrinter()
+        self.cogs_root_dir = 'cogs.'
         self.config_file = None
         self.perms_file = None
         self.auth = None
@@ -35,13 +40,7 @@ class PatriotBot(commands.Bot):
             self.auth = {} if os.stat('config.json').st_size == 0 else json.load(self.config_file)
             self.read_permissions()
             self.logger = logging.getLogger('log.txt')
-        except json.decoder.JSONDecodeError as jde:
-            raise InitializationError(jde)
-        except AssertionError as ae:
-            raise InitializationError(ae)
-        except FileNotFoundError as ioe:
-            raise InitializationError(ioe)
-        except InitializationError as init_e:
+        except (json.decoder.JSONDecodeError, AssertionError, FileNotFoundError) as init_e:
             if self.logger is None:
                 pass
             else:
@@ -60,31 +59,79 @@ class PatriotBot(commands.Bot):
         if self.extensions.__len__() == 0:
             return
 
-        try:
-            extension_list = list(self.extensions.keys())
+        # try:
+        extension_list = list(self.extensions.keys())
+        print(extension_list)
 
-            for task in self.task_list:
-                task.stop()
+        for task in self.task_list:
+            self.task_list[task].stop()
+            self.task_list[task] = None
 
-            for extension in extension_list:
-                self.unload_extension(f'cogs.{extension}')
-        except:
-            pass
+        for extension in extension_list:
+            self.unload_extension(extension)
+
+        print(extension_list)
+        # except:
+        #     pass
 
     def load_extensions(self):
-        try:
-            self.unload_extensions()
+        # try:
+        # should skip if the only extensions loaded are not unloadable (cant unload)
+        self.unload_extensions()
 
-            for filename in os.listdir('./cogs'):
-                if filename.endswith('.py'):
-                    self.load_extension(f'cogs.{filename[:-3]}')
-        except:
-            pass
+        for filename in os.listdir('./cogs'):
+            if filename.endswith('.py') and filename != "__init__.py" and not self.check_extension_loaded(filename[:-3]):
+                # self.load_extension(f'{self.cogs_root_dir + filename[:-3]}')
+                self.load_extension(filename[:-3])
+        # except Exception as e:
+        #     print(e)
+
+    def check_extension_loaded(self, name):
+        return name in self.extensions.keys()
+
+    def unload_extension(self, name):
+        # try:
+            if not self.check_extension_loaded(name):
+                raise ExtensionNotLoaded(name)
+
+            cog = self.extensions.get(name)
+            cog_class_obj = self.get_extension_class(name)
+
+            if cog_class_obj.unloadable:
+                self._remove_module_references(cog.__name__)
+                self._call_module_finalizers(cog, name)
+        # except Exception as e:
+        #     pass
+
+    def get_extension_class(self, name):
+        # try:
+            cog = self.extensions.get(name)
+            cog_class = getattr(cog, name)
+            return cog_class(self)
+        # except Exception as e:
+        #     pass
+
+    def load_extension(self, cog_name):
+        # try:
+            module = importlib.import_module(f'{self.cogs_root_dir + cog_name}')
+            cog_class = getattr(module, cog_name)
+
+            # NOTE
+            # If there are more than one type of cog classes, create a extension loader parent which handles the
+            # loading of different types of cog classes
+
+            if issubclass(cog_class, PatriotCog):
+                self._load_from_module_spec(module, cog_name)
+        # except ImportError as e:
+        #     raise ExtensionNotFound(cog_name, e) from e
+        # except Exception as e:
+        #     raise Exception("PatriotCog type check error occurred")
 
     async def shutdown(self):
         try:
             for task in self.task_list:
-                task.stop()
+                self.task_list[task].stop()
+                self.task_list[task] = None
         except Exception as e:
             print(e)
 
@@ -120,7 +167,21 @@ class PatriotBot(commands.Bot):
 
         if pt_task is not None:
             self.task_list[target_name] = pt_task
-            pt_task.run()
+
+    def run_tasks(self):
+        try:
+            for target_name in self.task_list:
+                self.run_task(target_name)
+        except Exception as e:
+            raise Exception("An error occurred trying to run all tasks" + e.__str__())
+
+    def run_task(self, target_name):
+        try:
+            if target_name in self.task_list:
+                if not self.task_list[target_name].is_running():
+                    self.task_list[target_name].run()
+        except Exception as e:
+            raise Exception("An error occurred trying to run task" + target_name + e.__str__())
 
 
 patriot_bot = PatriotBot("p?")

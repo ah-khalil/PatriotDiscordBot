@@ -1,26 +1,23 @@
-from bs4 import BeautifulSoup
-from urllib.request import (Request, urlopen)
-import re
-
-LYRICS_ERR_DICT = {
-    "ERR_REQ_ARGS": "{}, command requires the following arguments: {}",
-    "ERR_INV_NUM_ARGS": "{}, invalid number of arguments given",
-    "ERR_NO_QUOTES": "{}, don't leave quotes empty (you're not getting anything out of this)",
-    "MSG_NO_LYRICS": "{}, no lyrics found"
-}
-
-NAME = "lyrics\n\n"
-DESC = "Searches Genius for the lyrics to the given song from the given artist.\n\n"
-ARGS = "```\nUsage: \n" \
-       "\tt?lyrics \"<song name>\" \"<artist name>\"\n" \
-       "\tt?lyrics (-h | --help)\n\n"
-
-PERM_CHECK_LIST = [
-    "send_messages"
-]
-
-# bot = commands.Bot(command_prefix="p?", description="Testing")
+# from bs4 import BeautifulSoup
+# from urllib.request import (Request, urlopen)
+# import re
 #
+# LYRICS_ERR_DICT = {
+#     "ERR_REQ_ARGS": "{}, command requires the following arguments: {}",
+#     "ERR_INV_NUM_ARGS": "{}, invalid number of arguments given",
+#     "ERR_NO_QUOTES": "{}, don't leave quotes empty (you're not getting anything out of this)",
+#     "MSG_NO_LYRICS": "{}, no lyrics found"
+# }
+#
+# NAME = "lyrics\n\n"
+# DESC = "Searches Genius for the lyrics to the given song from the given artist.\n\n"
+# ARGS = "```\nUsage: \n" \
+#        "\tt?lyrics \"<song name>\" \"<artist name>\"\n" \
+#        "\tt?lyrics (-h | --help)\n\n"
+#
+# PERM_CHECK_LIST = [
+#     "send_messages"
+# ]
 #
 # @bot.command()
 # async def lyrics(**kwargs):

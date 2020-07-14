@@ -11,11 +11,11 @@ class PatriotTask:
         self.target = target
         self.interval = interval
         self.run_count = 0
-        self.to_run = kwargs.get('to_run', True)
-        self.func_cb = kwargs.get('func_cb', None)
-        self.target_args = kwargs.get('target_args', None)
-        self.func_cb_args = kwargs.get('func_cb_args', None)
-        self.continue_for = kwargs.get('continue_for', -1)
+        self.to_run = kwargs.get('run', True)
+        self.func_cb = kwargs.get('callback', None)
+        self.target_args = kwargs.get('targetArgs', None)
+        self.func_cb_args = kwargs.get('callbackArgs', None)
+        self.continue_for = kwargs.get('rounds', -1)
 
     def run(self):
         if self.to_run:
@@ -24,7 +24,7 @@ class PatriotTask:
                 self.pt_thread.start()
 
     def stop(self):
-        if self.pt_thread is not None:
+        if self.is_running():
             self.to_run = False
             self.pt_thread.cancel()
 
@@ -40,3 +40,6 @@ class PatriotTask:
         self.run_count += 1
         time.sleep(self.interval)
         self.run()
+
+    def is_running(self):
+        return self.pt_thread is not None and self.pt_thread.is_alive()
