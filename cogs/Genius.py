@@ -3,8 +3,6 @@ import re
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from PatriotCog import PatriotCog
-# from PatriotBot import patriot_bot
-from discord.ext.commands.cog import Cog
 from urllib.request import (Request, urlopen)
 
 
@@ -13,8 +11,7 @@ class Genius(PatriotCog):
         super(Genius, self).__init__()
 
         self.patriot_bot = patriot_bot
-        self.__message = {
-            "ERR_REQ_ARGS": "{}, command requires the following arguments: {}",
+        self.messages = {
             "ERR_INV_NUM_ARGS": "{}, invalid number of arguments given",
             "ERR_NO_QUOTES": "{}, don't leave quotes empty",
             "MSG_NO_LYRICS": "{}, no lyrics found"
@@ -35,6 +32,8 @@ class Genius(PatriotCog):
 
         args = ctx.content.split(" ", 1)
         regex = r"\"([^\"]*)\""
+
+        self.get_command_keyword(ctx.content.split(" ", 1))
 
         if len(args) < 2:
             return await ctx.channel.send(lyrics_msg_dict["ERR_REQ_ARGS"].format(ctx.author.mention, arg_msg))
