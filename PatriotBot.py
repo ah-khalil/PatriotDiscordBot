@@ -14,6 +14,8 @@ from discord.ext import commands
 from discord.ext.commands.errors import ExtensionNotFound
 from discord.ext.commands.errors import ExtensionNotLoaded
 
+logger = logging.getLogger(__name__)
+
 
 class PatriotBot(commands.Bot):
     UNEXPECTED_ERR = "AN ERROR OCCURRED: Please refrain from using this command until this bug is fixed"
@@ -25,7 +27,6 @@ class PatriotBot(commands.Bot):
         self.config_file = None
         self.perms_file = None
         self.auth = None
-        self.logger = None
         self.permissions = None
         self.roles = None
         self.prefix = 'p?' if command_prefix is None else command_prefix
@@ -34,18 +35,20 @@ class PatriotBot(commands.Bot):
         super().__init__(command_prefix=self.prefix, description=self.description)
 
         try:
+            logger_handler = logging.FileHandler(filename="log.txt")
+            logger_handler.setLevel(logging.DEBUG)
+            logger_handler.setFormatter(logging.Formatter("\n[%(asctime)s]\n\t%(name)s - %(levelname)s - %(message)s \n"))
+            logger.addHandler(logger_handler)
+
             self.config_file = open('config.json', "r")
             self.perms_file = open('permissions.json', "r+")
             self.auth = {} if os.stat('config.json').st_size == 0 else json.load(self.config_file)
             self.read_permissions()
-            self.logger = logging.getLogger('log.txt')
         except (json.decoder.JSONDecodeError, AssertionError, FileNotFoundError) as init_e:
-            if self.logger is None:
-                pass
-            else:
-                self.logger.exception(init_e.get_message())
+            if logger is not None:
+                logger.exception(str(init_e))
 
-            for f_stream in [self.config_file, self.perms_file, self.logger]:
+            for f_stream in [self.config_file, self.perms_file, logger]:
                 try:
                     f_stream.close()
                     self.shutdown()
@@ -143,7 +146,7 @@ class PatriotBot(commands.Bot):
             self.perms_file.seek(0)
             self.read_permissions()
         except json.decoder.JSONDecodeError as jde:
-            self.logger.exception(jde)
+            logger.exception(str(jde))
             self.pretty_p.pprint(self.permissions)
 
     def read_permissions(self):
@@ -151,7 +154,7 @@ class PatriotBot(commands.Bot):
             self.permissions = {"user_access": {}} if os.stat('permissions.json').st_size == 0 else json.load(self.perms_file)
             self.perms_file.seek(0)
         except json.decoder.JSONDecodeError as jde:
-            self.logger.exception(jde)
+            logger.exception(str(jde))
 
             if self.permissions is not None:
                 self.pretty_p.pprint(self.permissions)
