@@ -7,7 +7,6 @@ import json
 import sys
 import os
 
-from errors.InitializationError import InitializationError
 from functools import wraps
 from PatriotCog import PatriotCog
 from PatriotTask import PatriotTask
