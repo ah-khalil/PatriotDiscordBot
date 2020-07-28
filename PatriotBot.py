@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 import logging
 import inspect
 import pprint
@@ -113,9 +113,17 @@ class PatriotBot(commands.Bot):
         # except Exception as e:
         #     pass
 
+    # @todo Handle duplicate code for module loading
+    # load_extension() function contains code that loads a module from a spec
+    # to obtain a class definition for a potential cog.
+    # The class definition is needed as it determines if the cog is a subclass
+    # of PatriotCog, thus determining whether or not it should loaded.
+    # The spec and module loading components are also found in _load_from_module_spec()
+    # in bot.py, presenting duplicate code.
     def load_extension(self, cog_name):
         # try:
-            module = importlib.import_module(f'{self.cogs_root_dir + cog_name}')
+            spec = importlib.util.find_spec(f'{self.cogs_root_dir + cog_name}')
+            module = importlib.util.module_from_spec(spec)
             cog_class = getattr(module, cog_name)
 
             # NOTE
@@ -123,7 +131,7 @@ class PatriotBot(commands.Bot):
             # loading of different types of cog classes
 
             if issubclass(cog_class, PatriotCog):
-                self._load_from_module_spec(module, cog_name)
+                self._load_from_module_spec(spec, cog_name)
         # except ImportError as e:
         #     raise ExtensionNotFound(cog_name, e) from e
         # except Exception as e:

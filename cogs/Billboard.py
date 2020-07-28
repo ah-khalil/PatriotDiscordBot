@@ -80,7 +80,8 @@ class Billboard(PatriotCog):
             except ValueError:
                 pass
 
-    async def input_verifier(self, **kwargs):
+    @staticmethod
+    async def input_verifier(**kwargs):
         bill_comm_err_dict = {
             "ERR_REQ_ARGS": "{}, command requires the following arguments: {}",
             "ERR_QUERY": "{}, please provide one query",
