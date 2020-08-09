@@ -1,6 +1,5 @@
-from PatriotBot import patriot_bot
+from core.PatriotBot import patriot_bot
 
-import discord
 import pprint
 
 class Checks:

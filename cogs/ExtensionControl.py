@@ -1,6 +1,5 @@
-from PatriotCog import PatriotCog
+from core.PatriotCog import PatriotCog
 from discord.ext import commands
-from discord.ext.commands import Cog
 
 
 class ExtensionControl(PatriotCog):

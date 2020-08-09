@@ -1,25 +1,20 @@
 import importlib.util
 import logging
-import inspect
 import pprint
-import time
 import json
 import sys
 import os
 
-from functools import wraps
-from PatriotCog import PatriotCog
-from PatriotTask import PatriotTask
+from core.PatriotCog import PatriotCog
+from core.PatriotTask import PatriotTask
 from discord.ext import commands
 from discord.ext.commands.errors import ExtensionNotFound
 from discord.ext.commands.errors import ExtensionNotLoaded
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("core.PatriotBot")
 
 
 class PatriotBot(commands.Bot):
-    UNEXPECTED_ERR = "AN ERROR OCCURRED: Please refrain from using this command until this bug is fixed"
-
     def __init__(self, command_prefix):
         self.task_list = {}
         self.pretty_p = pprint.PrettyPrinter()
@@ -35,14 +30,14 @@ class PatriotBot(commands.Bot):
         super().__init__(command_prefix=self.prefix, description=self.description)
 
         try:
-            logger_handler = logging.FileHandler(filename="log.txt")
+            logger_handler = logging.FileHandler(filename="../log.txt")
             logger_handler.setLevel(logging.DEBUG)
             logger_handler.setFormatter(logging.Formatter("\n[%(asctime)s]\n\t%(name)s - %(levelname)s - %(message)s \n"))
             logger.addHandler(logger_handler)
 
-            self.config_file = open('config.json', "r")
-            self.perms_file = open('permissions.json', "r+")
-            self.auth = {} if os.stat('config.json').st_size == 0 else json.load(self.config_file)
+            self.config_file = open('../config.json', "r")
+            self.perms_file = open('../permissions.json', "r+")
+            self.auth = {} if os.stat('../config.json').st_size == 0 else json.load(self.config_file)
             self.read_permissions()
         except (json.decoder.JSONDecodeError, AssertionError, FileNotFoundError) as init_e:
             if logger is not None:
@@ -53,9 +48,10 @@ class PatriotBot(commands.Bot):
                     f_stream.close()
                     self.shutdown()
                 except IOError as ioe:
-                    pass
+                    if logger is not None:
+                        logger.exception(str(ioe))
         finally:
-            pass
+            logging.shutdown()
 
     def unload_extensions(self):
         if self.extensions.__len__() == 0:
@@ -81,8 +77,9 @@ class PatriotBot(commands.Bot):
         # should skip if the only extensions loaded are not unloadable (cant unload)
         self.unload_extensions()
 
-        for filename in os.listdir('./cogs'):
-            if filename.endswith('.py') and filename != "__init__.py" and not self.check_extension_loaded(filename[:-3]):
+        for filename in os.listdir('../cogs'):
+            if filename.endswith('.py') and filename != "__init__.py" and not self.check_extension_loaded(
+                    filename[:-3]):
                 # self.load_extension(f'{self.cogs_root_dir + filename[:-3]}')
                 self.load_extension(filename[:-3])
         # except Exception as e:
@@ -114,28 +111,65 @@ class PatriotBot(commands.Bot):
         #     pass
 
     # @todo Handle duplicate code for module loading
-    # load_extension() function contains code that loads a module from a spec
-    # to obtain a class definition for a potential cog.
-    # The class definition is needed as it determines if the cog is a subclass
-    # of PatriotCog, thus determining whether or not it should loaded.
-    # The spec and module loading components are also found in _load_from_module_spec()
-    # in bot.py, presenting duplicate code.
+    # @body load_extension() function contains code that loads a module from a spec
+    # @body to obtain a class definition for a potential cog.
+    # @body The class definition is needed as it determines if the cog is a subclass
+    # @body of PatriotCog, thus determining whether or not it should loaded.
+    # @body The spec and module loading components are also found in _load_from_module_spec()
+    # @body in bot.py, presenting duplicate code.
     def load_extension(self, cog_name):
         # try:
+            cog_class = None
             spec = importlib.util.find_spec(f'{self.cogs_root_dir + cog_name}')
-            module = importlib.util.module_from_spec(spec)
-            cog_class = getattr(module, cog_name)
+
+            if spec is None:
+                raise ExtensionNotFound("The following extension could not be found: {}".format(self.cogs_root_dir + cog_name))
+
+            try:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+            except Exception as e:
+                logger.exception(str(e))
+                raise ExtensionNotLoaded("The following extension could not be loaded: {}".format(self.cogs_root_dir + cog_name))
+
+            try:
+                cog_class = getattr(module, cog_name)
+            except AttributeError as attr_e:
+                logger.exception(str(attr_e))
+                self.remove_module(module)
 
             # NOTE
             # If there are more than one type of cog classes, create a extension loader parent which handles the
             # loading of different types of cog classes
+            try:
+                if issubclass(cog_class, PatriotCog):
+                    # self._load_from_module_spec(spec, cog_name)
+                    sys.modules[cog_name] = module
+                    setup = getattr(module, 'setup')
+                    setup(self)
+            except AttributeError as attr_e:
+                logger.exception(str(attr_e))
+                self.remove_module(module)
 
-            if issubclass(cog_class, PatriotCog):
-                self._load_from_module_spec(spec, cog_name)
         # except ImportError as e:
         #     raise ExtensionNotFound(cog_name, e) from e
         # except Exception as e:
         #     raise Exception("PatriotCog type check error occurred")
+
+    def remove_module(self, module):
+        try:
+            if module.__name__ in sys.modules:
+                del sys.modules[module.__name__]
+        except KeyError as key_e:
+            logger.exception(str(key_e))
+            raise KeyError("The following module has already been removed or was never entered: {}".format(module.__name__))
+
+        try:
+            self._remove_module_references(module.__name__)
+            self._call_module_finalizers(module, module.__name__)
+        except Exception as e:
+            logger.exception(str(e))
+            raise Exception("An error occurred attempting to remove the following module: {}".format(module.__name__))
 
     async def shutdown(self):
         try:
@@ -159,7 +193,11 @@ class PatriotBot(commands.Bot):
 
     def read_permissions(self):
         try:
-            self.permissions = {"user_access": {}} if os.stat('permissions.json').st_size == 0 else json.load(self.perms_file)
+            if os.stat('../permissions.json').st_size == 0:
+                self.permissions = {"user_access": {}}
+            else:
+                self.permissions = json.load(self.perms_file)
+
             self.perms_file.seek(0)
         except json.decoder.JSONDecodeError as jde:
             logger.exception(str(jde))

@@ -18,6 +18,10 @@ class PatriotCog(Cog):
     def unloadable(self) -> bool:
         return self.__unloadable
 
+    @unloadable.setter
+    def unloadable(self, val: bool):
+        self.__unloadable = val
+
     @property
     def messages(self) -> dict:
         return dict(self.__messages)

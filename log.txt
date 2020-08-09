@@ -1,0 +1,14 @@
+
+[2020-07-29 01:42:32,594]
+	PatriotBot - ERROR - [Errno 2] No such file or directory: 'config.json' 
+Traceback (most recent call last):
+  File "C:\Users\alikh\Documents\personal projects\PatriotDiscordBot\PatriotBot.py", line 43, in __init__
+    self.config_file = open('config.json', "r")
+FileNotFoundError: [Errno 2] No such file or directory: 'config.json'
+
+[2020-07-29 02:19:03,204]
+	PatriotBot - ERROR - [Errno 2] No such file or directory: 'permissions.json' 
+Traceback (most recent call last):
+  File "C:\Users\alikh\Documents\personal projects\PatriotDiscordBot\PatriotBot.py", line 44, in __init__
+    self.perms_file = open('permissions.json', "r+")
+FileNotFoundError: [Errno 2] No such file or directory: 'permissions.json'

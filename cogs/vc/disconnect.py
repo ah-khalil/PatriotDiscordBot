@@ -1,4 +1,3 @@
-from PatriotBot import *
 from cogs import vc
 
 DISC_ERR_DICT = {

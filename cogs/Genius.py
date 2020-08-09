@@ -2,7 +2,7 @@ import re
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
-from PatriotCog import PatriotCog
+from core.PatriotCog import PatriotCog
 from urllib.request import (Request, urlopen)
 
 

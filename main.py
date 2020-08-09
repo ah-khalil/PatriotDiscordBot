@@ -1,4 +1,4 @@
-from PatriotBot import patriot_bot
+from core.PatriotBot import patriot_bot
 import pprint
 
 

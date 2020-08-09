@@ -1,11 +1,11 @@
 import re
 import threading
 
-from PatriotCog import PatriotCog
+from core.ConfigSingleton import PatriotConfig
+from core.PatriotCog import PatriotCog
 from bs4 import BeautifulSoup as soup
 from discord import Embed, Color
 from discord.ext import commands
-from discord.ext.commands import Cog
 from urllib.request import (Request, urlopen)
 from cogs.billboard import (
     hot_url,
@@ -22,12 +22,15 @@ class Billboard(PatriotCog):
     def __init__(self, patriot_bot):
         super(Billboard, self).__init__()
 
+        self.cog_name = 'Billboard'
+
         self.song_list = []
         self.album_list = []
         self.lock = threading.Lock()
         self.patriot_bot = patriot_bot
-        self.patriot_bot.add_task(self.update_billboard_items, 60 * 60 * 24)
+        self.config = PatriotConfig(self.cog_name)
 
+        self.patriot_bot.add_task(self.update_billboard_items, 60 * 60 * 24)
 
     @commands.Cog.listener()
     async def on_ready(self):
