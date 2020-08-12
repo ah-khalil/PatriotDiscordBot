@@ -26,3 +26,13 @@ class CommandNotFoundError(PatriotError):
 class InitializationError(PatriotError):
     def __init__(self, message):
         super(InitializationError, self).__init__(message)
+
+
+class ConfigIOError(PatriotError):
+    def __init__(self, message):
+        super(ConfigIOError, self).__init__(message)
+
+
+class ConfigError(PatriotError):
+    def __init__(self, message):
+        super(ConfigError, self).__init__(message)
